@@ -4,7 +4,7 @@
 # 样例：
 
 ```
-unit
+uses
  RandomUnit;
 const
  n=100;
