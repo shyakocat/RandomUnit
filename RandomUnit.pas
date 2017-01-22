@@ -1,46 +1,54 @@
-{$M 100000000,0,100000000}       //À©´óÕ»¿Õ¼ä
-{$MACRO ON}                      //¿ªÆôºê¶¨Òå
-{$define ranC:=random(R-L+1)+L}  //Éú³É[L,R]µÄËæ»úÕûÊı
-{$define ranN:=random(N)+1}      //Éú³É[1,N]µÄËæ»úÕûÊı
+{$M 100000000,0,100000000}         //æ‰©å¤§æ ˆç©ºé—´
+{$MACRO ON}                        //å¼€å¯å®å®šä¹‰
+{$define ranC:=random(R-L+1)+L}    //ç”Ÿæˆ[L,R]çš„éšæœºæ•´æ•°
+{$define ranN:=random(N)+1}        //ç”Ÿæˆ[1,N]çš„éšæœºæ•´æ•°
+{$define ranA:=chr(97+random(26))} //ç”Ÿæˆéšæœºå°å†™å­—æ¯
 
 unit RandomUnit;
 
 interface
 uses math;
 const
- oo=$3f3f3f3f;     //ÎŞÇî´ó
- P=6662333;        //±ß±íµÄHashÄ£Öµ
+ oo=$3f3f3f3f;     //æ— ç©·å¤§
+ P=6662333;        //è¾¹è¡¨çš„Hashæ¨¡å€¼
 var
- a,f,u,v,w:array[0..3000005]of longint;  //aÎªËæ»úÊı×é
-                                         //fÎª²¢²é¼¯
-                                         //uÎª³ö±ßµÄµã
-                                         //vÎªÈë±ßµÄµã
-                                         //wÎª±ßÈ¨
- b:array[0..3000005]of extended;         //bÎªËæ»úÊµÊıÊı×é
+ a,f,u,v,w:array[0..3000005]of longint;  //aä¸ºéšæœºæ•°ç»„
+                                         //fä¸ºå¹¶æŸ¥é›†
+                                         //uä¸ºå‡ºè¾¹çš„ç‚¹
+                                         //vä¸ºå…¥è¾¹çš„ç‚¹
+                                         //wä¸ºè¾¹æƒ
+ b:array[0..3000005]of extended;         //bä¸ºéšæœºå®æ•°æ•°ç»„
+ s,t:ansistring;                         //sä¸ºæ–‡æœ¬å­—ç¬¦ä¸²
+                                         //tä¸ºåŒ¹é…å­—ç¬¦ä¸²
 
- e:longint;                                              //±ß±íµÄ±ßÊı
- head:array[0..P]of longint;                             //Í·Ö¸Õë
- next:array[0..10000005]of longint;                      //ºó¼ÌÊı×é
- node:array[0..10000005]of record u,v:longint end;       //±ß±íÖĞ¼ÇÂ¼¹ıµÄ±ß
+ e:longint;                                              //è¾¹è¡¨çš„è¾¹æ•°
+ head:array[0..P]of longint;                             //å¤´æŒ‡é’ˆ
+ next:array[0..10000005]of longint;                      //åç»§æ•°ç»„
+ node:array[0..10000005]of record u,v:longint end;       //è¾¹è¡¨ä¸­è®°å½•è¿‡çš„è¾¹
+ appr:array[0..10000005]of longint;                      //è¾¹è¡¨ä¸­è®°å½•è¿‡çš„å€¼
 
+procedure RandomArray(n:longint);                        //ç”Ÿæˆä¸€ä¸ªNçš„æ’åˆ—
+procedure RandomArray(n,l,r:longint);                    //ç”Ÿæˆé•¿åº¦ä¸ºNï¼ŒèŒƒå›´äº[L,R]çš„æ•°ç»„
+procedure RandomCleanArray(n,l,r:longint);               //ç”Ÿæˆé•¿åº¦ä¸ºNï¼ŒèŒƒå›´äº[L,R]çš„éé‡å¤æ•°ç»„
+procedure RandomArrayFloat(n,l,r:longint);               //ç”Ÿæˆé•¿åº¦ä¸ºNï¼ŒèŒƒå›´äº[L,R]çš„å®æ•°æ•°ç»„
+procedure RandomTree(n,l,r:longint);                     //ç”¨å¹¶æŸ¥é›†ç”Ÿæˆéšæœºæ ‘
+procedure RandomCircle(n,l,r:longint);                   //ç”Ÿæˆç¯
+procedure ChainTree(n,l,r:longint);                      //ç”Ÿæˆé“¾
+procedure MumTree(n,l,r:longint);                        //ç”ŸæˆèŠèŠ±æ ‘
+procedure BroomTree(n,l,r:longint);                      //ç”Ÿæˆæ‰«å¸šæ ‘ï¼ˆèŠèŠ±+é“¾ï¼‰
+procedure StarTree(n,l,r:longint);                       //ç”Ÿæˆæ˜Ÿæ˜Ÿæ ‘ï¼Œä»æ ¹è¿æ¥sqrt(N)æ¡é•¿sqrt(N)çš„é“¾
+procedure FullTree(n,l,r:longint);                       //ç”Ÿæˆå®Œå…¨äºŒå‰æ ‘
+procedure CircleTree(n,l,r:longint);                     //ç”Ÿæˆç¯å¥—æ ‘
+procedure RandomGraph(n,m,l,r:longint);                  //ç”Ÿæˆéšæœºå›¾
+procedure RandomCleanGraph(n,m,l,r:longint);             //ç”Ÿæˆæ²¡æœ‰è‡ªç¯ã€é‡è¾¹çš„éšæœºæœ‰å‘å›¾
+procedure SpfaGraph(n:longint);                          //ç”Ÿæˆwikiä¸­çš„å¡SPFAæ•°æ®ï¼ˆå®é™…æ•ˆæœä¸€èˆ¬ï¼‰
+procedure writea(n:longint);                             //è¾“å‡ºaæ•°ç»„ï¼Œä¸€è¡Œï¼Œç©ºæ ¼éš”å¼€
+procedure writeb(n:longint);                             //è¾“å‡ºbæ•°ç»„ï¼Œä¸€è¡Œï¼Œç©ºæ ¼éš”å¼€ï¼Œä¿ç•™3ä½å°æ•°
+procedure writeuv(n:longint);                            //è¾“å‡ºæ ‘ï¼ŒNè¡Œ
+procedure writeuvw(n:longint);                           //è¾“å‡ºå¸¦è¾¹æƒæ ‘ï¼ŒNè¡Œ
 
-procedure RandomArray(n:longint);                        //Éú³ÉÒ»¸öNµÄÅÅÁĞ
-procedure RandomArray(n,l,r:longint);                    //Éú³É³¤¶ÈÎªN£¬·¶Î§ÓÚ[L,R]µÄÊı×é
-procedure RandomArrayFloat(n,l,r:longint);               //Éú³É³¤¶ÈÎªN£¬·¶Î§ÓÚ[L,R]µÄÊµÊıÊı×é
-procedure RandomTree(n,l,r:longint);                     //ÓÃ²¢²é¼¯Éú³ÉËæ»úÊ÷
-procedure ChainTree(n,l,r:longint);                      //Éú³ÉÁ´
-procedure MumTree(n,l,r:longint);                        //Éú³É¾Õ»¨Ê÷
-procedure BroomTree(n,l,r:longint);                      //Éú³ÉÉ¨ÖãÊ÷£¨¾Õ»¨+Á´£©
-procedure StarTree(n,l,r:longint);                       //Éú³ÉĞÇĞÇÊ÷£¬´Ó¸ùÁ¬½Ósqrt(N)Ìõ³¤sqrt(N)µÄÁ´
-procedure FullTree(n,l,r:longint);                       //Éú³ÉÍêÈ«¶ş²æÊ÷
-procedure RandomGraph(n,m,l,r:longint);                  //Éú³ÉËæ»úÍ¼
-procedure RandomCleanGraph(n,m,l,r:longint);             //Éú³ÉÃ»ÓĞ×Ô»·¡¢ÖØ±ßµÄËæ»úÓĞÏòÍ¼
-procedure SpfaGraph(n:longint);                          //Éú³ÉwikiÖĞµÄ¿¨SPFAÊı¾İ£¨Êµ¼ÊĞ§¹ûÒ»°ã£©
-procedure writea(n:longint);                             //Êä³öaÊı×é£¬Ò»ĞĞ£¬¿Õ¸ñ¸ô¿ª
-procedure writeb(n:longint);                             //Êä³öbÊı×é£¬Ò»ĞĞ£¬¿Õ¸ñ¸ô¿ª£¬±£Áô3Î»Ğ¡Êı
-procedure writeuv(n:longint);                            //Êä³öÊ÷£¬NĞĞ
-procedure writeuvw(n:longint);                           //Êä³ö´ø±ßÈ¨Ê÷£¬NĞĞ
-
+procedure KMPArr1(n,m:longint);                          //æ„é€ å¡æœ´ç´ åŒ¹é…ç®—æ³•çš„æ•°æ®ï¼ˆä¸€ï¼‰
+procedure QSORTArr1(n:longint);                          //æ„é€ å¡(l+r)div 2å‹å¿«é€Ÿæ’åºçš„æ•°æ®ï¼ˆä¸€ï¼‰
 
 
 implementation
@@ -61,6 +69,49 @@ var
  i:longint;
 begin
  for i:=1 to n do a[i]:=ranC
+end;
+
+procedure RandomCleanArray(n,l,r:longint);
+var
+ i:longint;
+
+ procedure ad(v:longint);
+ var
+  u:longint;
+ begin
+  u:=v mod P;
+  inc(e);
+  next[e]:=head[u];
+  head[u]:=e;
+  appr[e]:=v
+ end;
+
+ function sk(v:longint):boolean;
+ var
+  i,u:longint;
+ begin
+  u:=v mod P;
+  i:=head[u];
+  while i<>0 do
+  begin
+   if appr[i]=v then exit(true);
+   i:=next[i]
+  end;
+  exit(false)
+ end;
+
+begin
+ e:=0;
+ fillchar(head,sizeof(head),0);
+ for i:=1 to n do
+ repeat
+  a[i]:=ranC;
+  if not sk(a[i]) then
+  begin
+   ad(a[i]);
+   break
+  end
+ until false
 end;
 
 procedure RandomArrayFloat(n,l,r:longint);
@@ -94,6 +145,14 @@ begin
  end
 end;
 
+procedure CircleTree(n,l,r:longint);
+begin
+ RandomTree(n,l,r);
+ u[n]:=ranN;
+ v[n]:=u[n]; while u[n]=v[n] do v[n]:=ranN;
+ w[n]:=ranC
+end;
+
 procedure ChainTree(n,l,r:longint);
 var
  i:longint;
@@ -105,6 +164,16 @@ begin
   v[i]:=a[i+1];
   w[i]:=ranC
  end
+end;
+
+procedure RandomCircle(n,l,r:longint);
+var
+ Root,i:longint;
+begin
+ ChainTree(n,l,r);
+ u[n]:=a[1];
+ v[n]:=a[n];
+ w[n]:=ranC
 end;
 
 procedure MumTree(n,l,r:longint);
@@ -285,6 +354,74 @@ begin
 end;
 
 
+
+procedure KMPArr1(n,m:longint);
+var
+ i:longint;
+ a,b:char;
+begin
+ s:='';
+ t:='';
+ a:=ranA;
+ b:=a; while b=a  do b:=ranA;
+ for i:=1 to m-1 do t:=t+a; t:=t+b;
+ for i:=1 to n do s:=s+a
+end;
+
+procedure sw(a,b:Pointer);
+var
+ p:Pointer;
+begin
+ GetMem(p,4);
+ Move(a^,p^,4);
+ Move(b^,a^,4);
+ Move(p^,b^,4);
+ FreeMem(p)
+end;
+
+procedure qs(a:Pointer;n:longint);
+var
+ i,j,m:longint;
+begin
+ if n<15 then
+ begin
+  for i:=0   to n-2 do
+  for j:=1+i to n-1 do
+  if longint((a+i<<2)^)>longint((a+j<<2)^) then sw(a+i<<2,a+j<<2);
+  exit
+ end;
+ i:=0; j:=n-1; m:=longint((a+random(n)<<2)^);
+ repeat
+  while longint((a+i<<2)^)<m do inc(i);
+  while longint((a+j<<2)^)>m do dec(j);
+  if i<=j then begin sw(a+i<<2,a+j<<2); inc(i); dec(j) end
+ until i>j;
+ if i<n-1 then qs(a+i<<2,n-i);
+ if 0<j   then qs(a,j+1)
+end;
+
+procedure qs(l,r:longint);
+var
+ i,j,m:longint;
+begin
+ i:=l; j:=r; m:=a[(l+r)>>1];
+ repeat
+  while a[i]<m do inc(i);
+  while a[j]>m do dec(j);
+  if i<=j then begin sw(a[i],a[j]); inc(i); dec(j) end
+ until i>j;
+ if i<r then qs(i,r);
+ if l<j then qs(l,j)
+end;
+
+procedure QSORTArr1(n:longint);
+var
+ i:longint;
+begin
+ RandomArray(n);
+ qs(@a[1],n);
+ for i:=2 to n do sw(a[(1+i)>>1],a[i])
+end;
 
 begin
  randomize;
