@@ -11,6 +11,14 @@ uses math;
 const
  oo=$3f3f3f3f;     //无穷大
  P=6662333;        //边表的Hash模值
+type
+ Chart=record      //边表
+  e:longint;                                  //边表的边数
+  head:array of longint;                      //头指针
+  next:array of longint;                      //后继数组
+  node:array of record u,v:longint end;       //边表中记录过的边
+  appr:array of longint;                      //边表中记录过的值
+ end;
 var
  a,f,u,v,w:array[0..3000005]of longint;  //a为随机数组
                                          //f为并查集
@@ -21,11 +29,7 @@ var
  s,t:ansistring;                         //s为文本字符串
                                          //t为匹配字符串
 
- e:longint;                                              //边表的边数
- head:array[0..P]of longint;                             //头指针
- next:array[0..10000005]of longint;                      //后继数组
- node:array[0..10000005]of record u,v:longint end;       //边表中记录过的边
- appr:array[0..10000005]of longint;                      //边表中记录过的值
+
 
 procedure RandomArray(n:longint);                        //生成一个N的排列
 procedure RandomArray(n,l,r:longint);                    //生成长度为N，范围于[L,R]的数组
@@ -42,12 +46,13 @@ procedure CircleTree(n,l,r:longint);                     //生成环套树
 procedure RandomGraph(n,m,l,r:longint);                  //生成随机图
 procedure RandomCleanGraph(n,m,l,r:longint);             //生成没有自环、重边的随机有向图
 procedure SpfaGraph(n:longint);                          //生成wiki中的卡SPFA数据（实际效果一般）
+procedure RandomCactus(n,m,l,r:longint);                 //生成n个点m个环的点仙人掌
 procedure writea(n:longint);                             //输出a数组，一行，空格隔开
 procedure writeb(n:longint);                             //输出b数组，一行，空格隔开，保留3位小数
 procedure writeuv(n:longint);                            //输出树，N行
 procedure writeuvw(n:longint);                           //输出带边权树，N行
 
-procedure KMPArr1(n,m:longint);                          //构造卡朴素匹配算法的数据（一）
+procedure KMPArr1(n,m:longint);                          //构造卡非KMP朴素匹配算法的数据（一）
 procedure QSORTArr1(n:longint);                          //构造卡(l+r)div 2型快速排序的数据（一）
 
 
@@ -74,44 +79,57 @@ end;
 procedure RandomCleanArray(n,l,r:longint);
 var
  i:longint;
+ z:Chart;
 
  procedure ad(v:longint);
  var
   u:longint;
  begin
-  u:=v mod P;
-  inc(e);
-  next[e]:=head[u];
-  head[u]:=e;
-  appr[e]:=v
+  with z do
+  begin
+   u:=v mod P;
+   inc(e);
+   next[e]:=head[u];
+   head[u]:=e;
+   appr[e]:=v
+  end
  end;
 
  function sk(v:longint):boolean;
  var
   i,u:longint;
  begin
-  u:=v mod P;
-  i:=head[u];
-  while i<>0 do
+  with z do
   begin
-   if appr[i]=v then exit(true);
-   i:=next[i]
-  end;
-  exit(false)
+   u:=v mod P;
+   i:=head[u];
+   while i<>0 do
+   begin
+    if appr[i]=v then exit(true);
+    i:=next[i]
+   end;
+   exit(false)
+  end
  end;
 
 begin
- e:=0;
- fillchar(head,sizeof(head),0);
- for i:=1 to n do
- repeat
-  a[i]:=ranC;
-  if not sk(a[i]) then
-  begin
-   ad(a[i]);
-   break
-  end
- until false
+ with z do
+ begin
+  e:=0;
+  setlength(head,P+5);
+  for i:=0 to P+4 do head[i]:=0;
+  setlength(next,n+5);
+  setlength(appr,n+5);
+  for i:=1 to n do
+  repeat
+   a[i]:=ranC;
+   if not sk(a[i]) then
+   begin
+    ad(a[i]);
+    break
+   end
+  until false
+ end
 end;
 
 procedure RandomArrayFloat(n,l,r:longint);
@@ -263,45 +281,58 @@ end;
 procedure RandomCleanGraph(n,m,l,r:longint);
 var
  i:longint;
+ z:Chart;
 
  procedure ad(x,y:longint);
  var
   u:longint;
  begin
-  u:=(int64(x)*n+y)mod P;
-  inc(e);
-  next[e]:=head[u];
-  head[u]:=e;
-  node[e].u:=x;
-  node[e].v:=y
+  with z do
+  begin
+   u:=(int64(x)*n+y)mod P;
+   inc(e);
+   next[e]:=head[u];
+   head[u]:=e;
+   node[e].u:=x;
+   node[e].v:=y
+  end
  end;
 
  function sk(x,y:longint):boolean;
  var
   u,i:longint;
  begin
-  u:=(int64(x)*n+y)mod P;
-  i:=head[u];
-  while i<>0 do
+  with z do
   begin
-   if (node[i].u=x)and(node[i].v=y) then exit(true);
-   i:=next[i]
-  end;
-  exit(false)
+   u:=(int64(x)*n+y)mod P;
+   i:=head[u];
+   while i<>0 do
+   begin
+    if (node[i].u=x)and(node[i].v=y) then exit(true);
+    i:=next[i]
+   end;
+   exit(false)
+  end
  end;
 
 begin
- e:=0;
- fillchar(head,sizeof(head),0);
- for i:=1 to m do
+ with z do
  begin
-  u[i]:=v[i];
-  while (u[i]=v[i])or sk(u[i],v[i]) do
+  e:=0;
+  setlength(head,P+5);
+  for i:=0 to P+4 do head[i]:=0;
+  setlength(next,m+5);
+  setlength(node,m+5);
+  for i:=1 to m do
   begin
-   u[i]:=ranN;
-   v[i]:=ranN
-  end;
-  w[i]:=ranC
+   u[i]:=v[i];
+   while (u[i]=v[i])or sk(u[i],v[i]) do
+   begin
+    u[i]:=ranN;
+    v[i]:=ranN
+   end;
+   w[i]:=ranC
+  end
  end
 end;
 
@@ -422,6 +453,107 @@ begin
  qs(@a[1],n);
  for i:=2 to n do sw(a[(1+i)>>1],a[i])
 end;
+
+procedure RandomCactus(n,m,l,r:longint);             //m必须大于0且不超过[n/2]
+var
+ x,i,j,s,t,EG,NL,NR:longint;
+ z:Chart;
+
+ procedure ad(u,v:longint);
+ begin
+  with z do
+  begin
+   inc(e);
+   next[e]:=head[u];
+   head[u]:=e;
+   appr[e]:=v
+  end
+ end;
+
+ function Probable(l,r,x:longint):longint;
+ var y:longint;
+ begin
+  y:=random(r-l+2);
+  case y of
+   0:exit(x);
+   else exit(y+l-1)
+  end
+ end;
+
+begin
+ with z do
+ begin
+  e:=0;
+  setlength(head,n+5);
+  for i:=0 to n+4 do head[i]:=0;
+  setlength(next,n+m+5);
+  setlength(appr,n+m+5);
+  t:=random(n-2*m+1)+m;
+  s:=n-t;
+  RandomTree(s,l,r);
+  writeuv(s-1); writeln('The Tree');
+  EG:=0;
+  for i:=1 to s-1 do
+  begin
+   ad(u[i],v[i]);
+   ad(v[i],u[i]);
+   if (u[i]>m)and(v[i]>m) then
+   begin
+    inc(EG);
+    u[EG]:=u[i];
+    v[EG]:=v[i]
+   end
+  end;
+  RandomCleanArray(m-1,1,t-1);
+  qs(@a[1],m-1);
+  a[0]:=0;
+  for i:=1 to m-1 do
+  begin
+   NL:=a[i-1]+s+1;
+   NR:=a[i]+s;
+   for j:=NL to NR-1 do
+   begin
+    inc(EG);
+    u[EG]:=j;
+    v[EG]:=j+1
+   end;
+   inc(EG); u[EG]:=i; v[EG]:=NL;
+   inc(EG); u[EG]:=i; v[EG]:=NR;
+   j:=head[i];
+   while j<>0 do
+   begin
+    x:=appr[j];
+    if (x>m)or(x<i) then
+    begin
+     inc(EG);
+     u[EG]:=Probable(NL,NR,i);
+     v[EG]:=x
+    end;
+    j:=next[j]
+   end
+  end;
+  NL:=a[m-1]+s+1;
+  NR:=t+s;
+  for j:=NL to NR-1 do
+  begin
+   inc(EG);
+   u[EG]:=j;
+   v[EG]:=j+1
+  end;
+  inc(EG); u[EG]:=m; v[EG]:=NL;
+  inc(EG); u[EG]:=m; v[EG]:=NR;
+  j:=head[m];
+  while j<>0 do
+  begin
+   inc(EG);
+   u[EG]:=Probable(NL,NR,m);
+   v[EG]:=appr[j];
+   j:=next[j]
+  end;
+  for i:=1 to n-1+m do w[i]:=ranC
+ end
+end;
+
 
 begin
  randomize;
