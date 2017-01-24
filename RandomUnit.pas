@@ -22,8 +22,8 @@ type
 var
  a,f,u,v,w:array[0..3000005]of longint;  //a为随机数组
                                          //f为并查集
-                                         //u为出边的点
-                                         //v为入边的点
+                                         //u为边的起点
+                                         //v为边的终点
                                          //w为边权
  b:array[0..3000005]of extended;         //b为随机实数数组
  s,t:ansistring;                         //s为文本字符串
@@ -31,10 +31,13 @@ var
 
 
 
+procedure Fopen(const s:ansistring);                     //打开输出文件
+procedure Fclose;                                        //关闭输出文件
 procedure RandomArray(n:longint);                        //生成一个N的排列
 procedure RandomArray(n,l,r:longint);                    //生成长度为N，范围于[L,R]的数组
 procedure RandomCleanArray(n,l,r:longint);               //生成长度为N，范围于[L,R]的非重复数组
-procedure RandomArrayFloat(n,l,r:longint);               //生成长度为N，范围于[L,R]的实数数组
+procedure RandomIntervalArray(n,l,r,x:longint);          //生成长度为N，范围于[L,R]的递增数组，相邻数的差至少为x
+procedure RandomArrayFloat(n,l,r:longint);               //生成长度为N，范围于[L,R+1)的实数数组
 procedure RandomTree(n,l,r:longint);                     //用并查集生成随机树
 procedure RandomCircle(n,l,r:longint);                   //生成环
 procedure ChainTree(n,l,r:longint);                      //生成链
@@ -49,14 +52,26 @@ procedure SpfaGraph(n:longint);                          //生成wiki中的卡SP
 procedure RandomCactus(n,m,l,r:longint);                 //生成n个点m个环的点仙人掌
 procedure writea(n:longint);                             //输出a数组，一行，空格隔开
 procedure writeb(n:longint);                             //输出b数组，一行，空格隔开，保留3位小数
-procedure writeuv(n:longint);                            //输出树，N行
-procedure writeuvw(n:longint);                           //输出带边权树，N行
+procedure writeuv(n:longint);                            //输出u、v数组，N行
+procedure writeuvw(n:longint);                           //输出u、v、w数组，N行
+procedure writeTree1(Rt,n:longint);                      //输出Rt为根的N元树，N-1行第i行为i点的父亲
+procedure writeTree2(Rt,n:longint);                      //输出Rt为根的N元树，N-1行第i行先是Si表示儿子个数，后面Si个数为i点的儿子
 
-procedure KMPArr1(n,m:longint);                          //构造卡非KMP朴素匹配算法的数据（一）
+procedure KMPArr1(n,m:longint);                          //构造卡朴素匹配算法（非KMP）的数据（一）
 procedure QSORTArr1(n:longint);                          //构造卡(l+r)div 2型快速排序的数据（一）
 
 
 implementation
+
+procedure Fopen(const s:ansistring);
+begin
+ assign(output,s); rewrite(output)
+end;
+
+procedure Fclose;
+begin
+ close(output)
+end;
 
 procedure sw(var a,b:longint);
 var c:longint; begin c:=a; a:=b; b:=c end;
@@ -331,7 +346,8 @@ begin
     u[i]:=ranN;
     v[i]:=ranN
    end;
-   w[i]:=ranC
+   w[i]:=ranC;
+   ad(u[i],v[i])
   end
  end
 end;
@@ -486,8 +502,8 @@ begin
   e:=0;
   setlength(head,n+5);
   for i:=0 to n+4 do head[i]:=0;
-  setlength(next,n+m+5);
-  setlength(appr,n+m+5);
+  setlength(next,(n+m+5)*2);
+  setlength(appr,(n+m+5)*2);
   t:=random(n-2*m+1)+m;
   s:=n-t;
   RandomTree(s,l,r);
@@ -553,6 +569,143 @@ begin
   for i:=1 to n-1+m do w[i]:=ranC
  end
 end;
+
+procedure RandomIntervalArray(n,l,r,x:longint);      //区间总数r-l+1必须大于最大相差数(n-1)x
+var
+ i:longint;
+begin
+ RandomArray(n,l,r-(n-1)*x);
+ qs(@a[1],n);
+ for i:=1 to n do inc(a[i],(i-1)*x)
+end;
+
+procedure writeTree1(Rt,n:longint);
+var
+ z:Chart;
+ i:longint;
+
+ procedure ad(u,v:longint);
+ begin
+  with z do
+  begin
+   inc(e);
+   next[e]:=head[u];
+   head[u]:=e;
+   appr[e]:=v
+  end
+ end;
+
+ procedure sk(u,k:longint);
+ var
+  i,v:longint;
+ begin
+  with z do
+  begin
+   i:=head[u];
+   while i<>0 do
+   begin
+    v:=appr[i];
+    if v<>k then
+    begin
+     f[v]:=u;
+     sk(v,u)
+    end;
+    i:=next[i]
+   end
+  end
+ end;
+
+begin
+ with z do
+ begin
+  e:=0;
+  setlength(head,n+5);
+  for i:=0 to n+4 do head[i]:=0;
+  setlength(next,(n+5)*2);
+  setlength(appr,(n+5)*2);
+  for i:=1 to n-1 do
+  begin
+   ad(u[i],v[i]);
+   ad(v[i],u[i])
+  end;
+  sk(Rt,0);
+  f[Rt]:=0;
+  for i:=1 to n do writeln(f[i])
+ end
+end;
+
+procedure writeTree2(Rt,n:longint);
+var
+ z:Chart;
+ i,j:longint;
+ a:array of longint;
+
+ procedure ad(u,v:longint);
+ begin
+  with z do
+  begin
+   inc(e);
+   next[e]:=head[u];
+   head[u]:=e;
+   appr[e]:=v
+  end
+ end;
+
+ procedure sk(u,k:longint);
+ var
+  i,v:longint;
+ begin
+  with z do
+  begin
+   i:=head[u];
+   while i<>0 do
+   begin
+    v:=appr[i];
+    if v<>k then
+    begin
+     f[v]:=u;
+     sk(v,u)
+    end;
+    i:=next[i]
+   end
+  end
+ end;
+
+begin
+ with z do
+ begin
+  e:=0;
+  setlength(head,n+5);
+  for i:=0 to n+4 do head[i]:=0;
+  setlength(next,(n+5)*2);
+  setlength(appr,(n+5)*2);
+  for i:=1 to n-1 do
+  begin
+   ad(u[i],v[i]);
+   ad(v[i],u[i])
+  end;
+  sk(Rt,0);
+  setlength(a,n+5);
+  for i:=0 to n+4 do a[i]:=0;
+  e:=0;
+  for i:=0 to n+4 do head[i]:=0;
+  for i:=1 to n-1 do
+  if f[u[i]]=v[i] then begin ad(v[i],u[i]); inc(a[v[i]]) end
+                  else begin ad(u[i],v[i]); inc(a[u[i]]) end;
+  for i:=1 to n do
+  begin
+   write(a[i]);
+   j:=head[i];
+   while j<>0 do
+   begin
+    write(' ',appr[j]);
+    j:=next[j]
+   end;
+   writeln
+  end
+ end
+end;
+
 
 
 begin
