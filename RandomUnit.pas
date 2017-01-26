@@ -33,6 +33,11 @@ var
 
 procedure Fopen(const s:ansistring);                     //打开输出文件
 procedure Fclose;                                        //关闭输出文件
+
+function Rnd(l,r:longint):longint;                       //随机生成[L,R]的数
+function Sign:longint;                                   //生成1或-1，1的概率为1/2
+function Sign(x:real):longint;                           //生成1或-1，1的概率为x，x∈[0,1]
+
 procedure RandomArray(n:longint);                        //生成一个N的排列
 procedure RandomArray(n,l,r:longint);                    //生成长度为N，范围于[L,R]的数组
 procedure RandomCleanArray(n,l,r:longint);               //生成长度为N，范围于[L,R]的非重复数组
@@ -48,17 +53,18 @@ procedure FullTree(n,l,r:longint);                       //生成完全二叉树
 procedure CircleTree(n,l,r:longint);                     //生成环套树
 procedure RandomGraph(n,m,l,r:longint);                  //生成随机图
 procedure RandomCleanGraph(n,m,l,r:longint);             //生成没有自环、重边的随机有向图
-procedure SpfaGraph(n:longint);                          //生成wiki中的卡SPFA数据（实际效果一般）
 procedure RandomCactus(n,m,l,r:longint);                 //生成n个点m个环的点仙人掌
 procedure writea(n:longint);                             //输出a数组，一行，空格隔开
 procedure writeb(n:longint);                             //输出b数组，一行，空格隔开，保留3位小数
 procedure writeuv(n:longint);                            //输出u、v数组，N行
 procedure writeuvw(n:longint);                           //输出u、v、w数组，N行
-procedure writeTree1(Rt,n:longint);                      //输出Rt为根的N元树，N-1行第i行为i点的父亲
-procedure writeTree2(Rt,n:longint);                      //输出Rt为根的N元树，N-1行第i行先是Si表示儿子个数，后面Si个数为i点的儿子
+procedure writeTree1(Rt,n:longint);                      //输出Rt为根的N元树，N-1行，第i行为i点的父亲
+procedure writeTree2(Rt,n:longint);                      //输出Rt为根的N元树，N-1行，第i行先是Si表示儿子个数，后面Si个数为i点的儿子
+procedure writeGraph1(n,m,x,y:longint);                  //输出图，以n行×n列的邻接表形式，无边的权值初始化为x，y=0表示无向图否则为有向图
 
 procedure KMPArr1(n,m:longint);                          //构造卡朴素匹配算法（非KMP）的数据（一）
 procedure QSORTArr1(n:longint);                          //构造卡(l+r)div 2型快速排序的数据（一）
+function SpfaGraph1(n:longint):longint;                  //构造wiki中的卡SPFA数据（实际效果一般）（一）
 
 
 implementation
@@ -72,6 +78,15 @@ procedure Fclose;
 begin
  close(output)
 end;
+
+function Rnd(l,r:longint):longint;
+begin exit(RanC) end;
+
+function Sign:longint;
+begin if random(2)=0 then exit(1); exit(-1) end;
+
+function Sign(x:real):longint;
+begin if random(oo)<oo*x then exit(1); exit(-1) end;
 
 procedure sw(var a,b:longint);
 var c:longint; begin c:=a; a:=b; b:=c end;
@@ -352,22 +367,25 @@ begin
  end
 end;
 
-procedure SpfaGraph(n:longint);
+function SpfaGraph1(n:longint):longint;
 var
- i:longint;
+ i,EG:longint;
 begin
  for i:=1 to n-1 do
  begin
-  u[i]:=i;
-  v[i]:=i+1;
-  w[i]:=1
+  inc(EG);
+  u[EG]:=i;
+  v[EG]:=i+1;
+  w[EG]:=1
  end;
  for i:=1 to 4*n do
  begin
-  u[i]:=ranN;
-  v[i]:=ranN;
-  w[i]:=random(n)+n
- end
+  inc(EG);
+  u[EG]:=ranN;
+  v[EG]:=ranN;
+  w[EG]:=random(n)+n
+ end;
+ exit(EG)
 end;
 
 procedure writea(n:longint);
@@ -706,6 +724,18 @@ begin
  end
 end;
 
+procedure writeGraph1(n,m,x,y:longint);
+var
+ i,j:longint;
+ a:array of array of longint;
+begin
+ setlength(a,n+5,n+5);
+ for i:=0 to n+4 do
+ for j:=0 to n+4 do a[i,j]:=x;
+ for i:=1 to m do begin a[u[i],v[i]]:=w[i]; if y=0 then a[v[i],u[i]]:=w[i] end;
+ for i:=1 to n do begin write(a[i,1]);
+ for j:=2 to m do write(  ' ',a[i,j]); writeln end
+end;
 
 
 begin
