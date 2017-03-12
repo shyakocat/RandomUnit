@@ -62,9 +62,9 @@ function Itvl(l,r:longint):ansistring;                   //生成一个[l,r]区�
 function Itvl_Lim(l,r,b:longint):ansistring;             //生成一个[l,r]区间，满足r-l+1<=b
 function Trans(const s:ansistring):ansistring;           //转换正则表达式
                                                          //支持识别rnd(l,r) [l,r]随机数
-                                                         //        chr(l,r) [l,r]随机字符
-                                                         //        itvl(l,r) [l,r]区间
-                                                         //        pair(l,r) [l,r]的两个数
+                                                         //       chr(l,r) [l,r]随机字符
+                                                         //       itvl(l,r) [l,r]区间
+                                                         //       pair(l,r) [l,r]的两个数
 
 procedure TreeGo(rt,n:longint);                          //以rt为根遍历树，统计_d,_s,mx_d,mx_s
 
@@ -74,7 +74,7 @@ procedure RandomCleanArray(n,l,r:longint);               //生成长度为N，�
 procedure RandomIntervalArray(n,l,r,x:longint);          //生成长度为N，范围于[L,R]的递增数组，相邻数的差至少为x
 procedure RandomArrayFloat(n,l,r:longint);               //生成长度为N，范围于[L,R+1)的实数数组
 procedure RandomTree(n,l,r:longint);                     //用并查集生成随机树
-procedure RandomTree2(n,l,r:longint);                    //生成随机数，i的父亲在[1,i-1]中随机
+procedure RandomTree2(n,l,r:longint);                    //生成随机树，i的父亲在[1,i-1]中随机
 procedure RandomCircle(n,l,r:longint);                   //生成环
 procedure ChainTree(n,l,r:longint);                      //生成链
 procedure MumTree(n,l,r:longint);                        //生成菊花树
