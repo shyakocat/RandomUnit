@@ -1,4 +1,4 @@
-{$M 100000000,0,100000000}         //扩大栈空间
+﻿{$M 100000000,0,100000000}         //扩大栈空间
 {$MACRO ON}                        //开启宏定义
 {$define ranC:=random(R-L+1)+L}    //生成[L,R]的随机整数
 {$define ranN:=random(N)+1}        //生成[1,N]的随机整数
@@ -14,29 +14,59 @@ const
 type
  Chart=record      //边表
   e:longint;                                  //边表的边数
+  tim:longint;                                //时间戳
   head:array of longint;                      //头指针
+  flag:array of longint;                      //标记数组
   next:array of longint;                      //后继数组
   node:array of record u,v:longint end;       //边表中记录过的边
   appr:array of longint;                      //边表中记录过的值
  end;
+ Msg=object            //消息体
+  n:longint;           //消息总数
+  pr:boolean;          //输出状态
+  weightsum:real;      //权重总和
+  a:array of record weight:real; code:ansistring; timelim,time:longint end; //weight语句权重，code正则表达式（由Trans识别），timelim语句限制个数
+  procedure add(const p:real;const s:ansistring);                           //添加语句：权重，正则表达式
+  procedure add(const p:real;const s:ansistring;t:longint);                 //添加语句：权重，正则表达式，语句限制个数
+  procedure print;                                                          //输出单行（不换行）
+  procedure println;                                                        //输出单行（换行）
+  procedure println(k:longint);                                             //输出连续K句消息，语句限制个数起作用
+ end;
+ alphabet=set of char;
 var
- a,f,u,v,w:array[0..3000005]of longint;  //a为随机数组
-                                         //f为并查集
-                                         //u为边的起点
-                                         //v为边的终点
-                                         //w为边权
- b:array[0..3000005]of extended;         //b为随机实数数组
- s,t:ansistring;                         //s为文本字符串
-                                         //t为匹配字符串
+ a,f,u,v,w,_d,_s:array[0..3000005]of longint;  //a为随机数组
+                                               //f为并查集
+                                               //u为边的起点
+                                               //v为边的终点
+                                               //w为边权
+                                               //_d为树深
+                                               //_s为子树大小
+ mx_d,mx_s:longint;                            //mx_d为最大树深
+                                               //mx_s为最大子树大小
+ b:array[0..3000005]of extended;               //b为随机实数数组
+ s,t:ansistring;                               //s为文本字符串
+                                               //t为匹配字符串
 
 
 
 procedure Fopen(const s:ansistring);                     //打开输出文件
 procedure Fclose;                                        //关闭输出文件
+procedure Pai(ran,A,B,Ao,Bo:ansistring);                 //生成对拍的bat，ran为随机程序名，A为标程名，B为待测程序名，Ao为标程输出文件名，Bo为待测程序输出文件名
+procedure Pai(x:ansistring);                             //生成对拍的bat，对应Pai(xran.exe,xa.exe,x.exe,xa.out,x.out)
 
 function Rnd(l,r:longint):longint;                       //随机生成[L,R]的数
 function Sign:longint;                                   //生成1或-1，1的概率为1/2
 function Sign(x:real):longint;                           //生成1或-1，1的概率为x，x∈[0,1]
+function RandomString(n:longint;s:alphabet):ansistring;  //生成长度为n，字符集为s的随机字符串
+function Itvl(l,r:longint):ansistring;                   //生成一个[l,r]区间
+function Itvl_Lim(l,r,b:longint):ansistring;             //生成一个[l,r]区间，满足r-l+1<=b
+function Trans(const s:ansistring):ansistring;           //转换正则表达式
+                                                         //支持识别rnd(l,r) [l,r]随机数
+                                                         //        chr(l,r) [l,r]随机字符
+                                                         //        itvl(l,r) [l,r]区间
+                                                         //        pair(l,r) [l,r]的两个数
+
+procedure TreeGo(rt,n:longint);                          //以rt为根遍历树，统计_d,_s,mx_d,mx_s
 
 procedure RandomArray(n:longint);                        //生成一个N的排列
 procedure RandomArray(n,l,r:longint);                    //生成长度为N，范围于[L,R]的数组
@@ -44,6 +74,7 @@ procedure RandomCleanArray(n,l,r:longint);               //生成长度为N，�
 procedure RandomIntervalArray(n,l,r,x:longint);          //生成长度为N，范围于[L,R]的递增数组，相邻数的差至少为x
 procedure RandomArrayFloat(n,l,r:longint);               //生成长度为N，范围于[L,R+1)的实数数组
 procedure RandomTree(n,l,r:longint);                     //用并查集生成随机树
+procedure RandomTree2(n,l,r:longint);                    //生成随机数，i的父亲在[1,i-1]中随机
 procedure RandomCircle(n,l,r:longint);                   //生成环
 procedure ChainTree(n,l,r:longint);                      //生成链
 procedure MumTree(n,l,r:longint);                        //生成菊花树
@@ -56,10 +87,11 @@ procedure RandomCleanGraph(n,m,l,r:longint);             //生成没有自环、
 procedure RandomCactus(n,m,l,r:longint);                 //生成n个点m个环的点仙人掌
 procedure writea(n:longint);                             //输出a数组，一行，空格隔开
 procedure writeb(n:longint);                             //输出b数组，一行，空格隔开，保留3位小数
+procedure writelna(n:longint);                           //输出a数组，N行
 procedure writeuv(n:longint);                            //输出u、v数组，N行
 procedure writeuvw(n:longint);                           //输出u、v、w数组，N行
-procedure writeTree1(Rt,n:longint);                      //输出Rt为根的N元树，N-1行，第i行为i点的父亲
-procedure writeTree2(Rt,n:longint);                      //输出Rt为根的N元树，N-1行，第i行先是Si表示儿子个数，后面Si个数为i点的儿子
+procedure writeTree1(Rt,n:longint);                      //输出Rt为根的N元树，N-1行，第i行为i+1点的父亲
+procedure writeTree2(Rt,n:longint);                      //输出Rt为根的N元树，N行，第i行先是Si表示儿子个数，后面Si个数为i点的儿子
 procedure writeGraph1(n,m,x,y:longint);                  //输出图，以n行×n列的邻接表形式，无边的权值初始化为x，y=0表示无向图否则为有向图
 
 procedure KMPArr1(n,m:longint);                          //构造卡朴素匹配算法（非KMP）的数据（一）
@@ -69,6 +101,169 @@ function SpfaGraph1(n:longint):longint;                  //构造wiki中的卡SP
 
 implementation
 
+operator :=(x:longint)s:ansistring;
+begin str(x,s) end;
+
+  function sread_int(const s:ansistring;var i,x:longint):boolean;
+  var sgn:longint;
+  begin
+   x:=0;
+   if (i<=length(s))and(s[i]='-') then
+   begin sgn:=-1; inc(i) end else sgn:=1;
+   if not((i<=length(s))and('0'<=s[i])and(s[i]<='9')) then exit(false);
+   while (i<=length(s))and('0'<=s[i])and(s[i]<='9') do
+   begin x:=x*10+ord(s[i])-48; inc(i) end;
+   x:=x*sgn;
+   exit(true)
+  end;
+
+  function mch_rnd(const s:ansistring;var i:longint):ansistring;
+  var j,L,R:longint;
+  begin
+   if copy(s,i+1,4)='rnd(' then
+   begin
+    j:=i+5;
+    if sread_int(s,j,L) then
+    if (j<=length(s))and(s[j]=',') then begin inc(j);
+    if sread_int(s,j,R) then
+    if (j<=length(s))and(s[j]=')') then begin i:=j+1; exit(ranC) end
+    end
+   end;
+   exit('')
+  end;
+
+  function mch_chr(const s:ansistring;var i:longint):ansistring;
+  var j,L,R:longint;
+  begin
+   if copy(s,i+1,4)='chr(' then
+   begin
+    j:=i+5;
+    if j<=length(s) then begin L:=ord(s[j]); inc(j);
+    if (j<=length(s))and(s[j]=',') then begin inc(j);
+    if j<=length(s) then begin R:=ord(s[j]); inc(j);
+    if (j<=length(s))and(s[j]=')') then begin i:=j+1; exit(char(ranC)) end
+    end end end
+   end;
+   exit('')
+  end;
+
+  function mch_itvl(const s:ansistring;var i:longint):ansistring;
+  var j,L,R,x,y:longint;
+  begin
+   if copy(s,i+1,5)='itvl(' then
+   begin
+    j:=i+6;
+    if sread_int(s,j,L) then
+    if (j<=length(s))and(s[j]=',') then begin inc(j);
+    if sread_int(s,j,R) then
+    if (j<=length(s))and(s[j]=')') then begin i:=j+1;
+    x:=ranC; y:=ranC; if x>y then begin j:=x; x:=y; y:=j end;
+    exit(ansistring(x)+' '+y) end
+    end
+   end;
+   exit('')
+  end;
+
+  function mch_pair(const s:ansistring;var i:longint):ansistring;
+  var j,L,R,x,y:longint;
+  begin
+   if copy(s,i+1,5)='pair(' then
+   begin
+    j:=i+6;
+    if sread_int(s,j,L) then
+    if (j<=length(s))and(s[j]=',') then begin inc(j);
+    if sread_int(s,j,R) then
+    if (j<=length(s))and(s[j]=')') then begin i:=j+1;
+    x:=ranC; repeat y:=ranC until y<>x;
+    exit(ansistring(x)+' '+y) end
+    end
+   end;
+   exit('')
+  end;
+
+
+function Trans(const s:ansistring):ansistring;
+var
+ t,z:ansistring;
+ i,j,tmp:longint;
+begin
+ t:='';
+ i:=1;
+ while i<=length(s) do
+ begin
+  if s[i]='&' then
+  begin
+   z:=mch_rnd(s,i);  if z<>'' then begin t:=t+z; continue end;
+   z:=mch_chr(s,i);  if z<>'' then begin t:=t+z; continue end;
+   z:=mch_itvl(s,i); if z<>'' then begin t:=t+z; continue end;
+   z:=mch_pair(s,i); if z<>'' then begin t:=t+z; continue end;
+
+  end;
+  t:=t+s[i];
+  i:=i+1
+ end;
+ exit(t)
+end;
+
+
+ procedure Msg.add(const p:real;const s:ansistring);
+ begin
+  inc(n);
+  if n>high(a) then setlength(a,n<<1);
+  a[n].weight:=p;
+  a[n].code:=s;
+  a[n].timelim:=maxlongint;
+  weightsum:=weightsum+p
+ end;
+
+ procedure Msg.add(const p:real;const s:ansistring;t:longint);
+ begin
+  add(p,s);
+  a[n].timelim:=t
+ end;
+
+ procedure Msg.print;
+ var
+  rp,ps:real;
+  i:longint;
+ begin
+  if n=0 then exit;
+  repeat
+   rp:=random(maxlongint)/(maxlongint-1)*weightsum;
+   ps:=0;
+   for i:=1 to n do
+   with a[i] do
+   begin
+    ps:=ps+weight;
+    if ps>=rp then
+    begin
+     if pr then
+     begin
+      if timelim=time then break;
+      inc(time)
+     end;
+     write(trans(code));
+     exit
+    end
+   end
+  until false
+ end;
+
+ procedure Msg.println;
+ begin
+  print; writeln
+ end;
+
+ procedure Msg.println(k:longint);
+ var i:longint;
+ begin
+  pr:=true;
+  for i:=1 to n do a[i].time:=0;
+  for i:=1 to k do println;
+  pr:=false
+ end;
+
+
 procedure Fopen(const s:ansistring);
 begin
  assign(output,s); rewrite(output)
@@ -77,6 +272,34 @@ end;
 procedure Fclose;
 begin
  close(output)
+end;
+
+procedure Pai(ran,A,B,Ao,Bo:ansistring);
+var f:text;
+begin
+ if (length(ran)<4)or(copy(ran,length(ran)-3,4)<>'.exe') then ran:=ran+'.exe';
+ if (length(A  )<4)or(copy(A  ,length(A  )-3,4)<>'.exe') then A  :=A  +'.exe';
+ if (length(B  )<4)or(copy(B  ,length(B  )-3,4)<>'.exe') then B  :=B  +'.exe';
+ if (length(Ao )<4)or(copy(Ao ,length(Ao )-3,4)<>'.out')
+                  and(copy(Ao ,length(Ao )-3,4)<>'.ans') then Ao :=Ao +'.out';
+ if (length(Bo )<4)or(copy(Bo ,length(Bo )-3,4)<>'.out')
+                  and(copy(Bo ,length(Bo )-3,4)<>'.ans') then Bo :=Bo +'.out';
+ assign(f,'pai.bat'); rewrite(f);
+ writeln(f,'@echo off');
+ writeln(f,':loop');
+ writeln(f,' '+ran);
+ writeln(f,' '+A);
+ writeln(f,' '+B);
+ writeln(f,'fc '+Ao+' '+Bo);
+ writeln(f,'if not errorlevel 1 goto loop');
+ writeln(f,'pause');
+ writeln(f,'goto loop');
+ close(f)
+end;
+
+procedure Pai(x:ansistring);
+begin
+ Pai(x+'ran.exe',x+'.exe',x+'a.exe',x+'.out',x+'a.out')
 end;
 
 function Rnd(l,r:longint):longint;
@@ -90,6 +313,65 @@ begin if random(oo)<oo*x then exit(1); exit(-1) end;
 
 procedure sw(var a,b:longint);
 var c:longint; begin c:=a; a:=b; b:=c end;
+
+
+procedure TreeGo(rt,n:longint);
+var
+ z:Chart;
+ i:longint;
+
+ procedure ad(u,v:longint);
+ begin
+  with z do
+  begin
+   inc(e);
+   next[e]:=head[u];
+   head[u]:=e;
+   appr[e]:=v
+  end
+ end;
+
+ procedure sk(u,k:longint);
+ var i,v:longint;
+ begin
+  _s[u]:=1;
+  i:=z.head[u];
+  while i<>0 do
+  begin
+   v:=z.appr[i];
+   if v<>k then
+   begin
+    _d[v]:=_d[u]+1;
+    sk(v,u);
+    inc(_s[u],_s[v])
+   end;
+   i:=z.next[i]
+  end;
+  if _d[u]>mx_d then mx_d:=_d[u];
+  if (u<>rt)and(_s[u]>mx_s) then mx_s:=_s[u]
+ end;
+
+begin
+ with z do
+ begin
+  e:=0;
+  setlength(head,n+5);
+  for i:=0 to n+4 do head[i]:=0;
+  setlength(next,n*2+5);
+  setlength(appr,n*2+5);
+ end;
+ for i:=1 to n-1 do
+ begin
+  ad(u[i],v[i]);
+  ad(v[i],u[i])
+ end;
+ mx_d:=0;
+ mx_s:=0;
+ fillchar(_d,sizeof(_d),0);
+ fillchar(_s,sizeof(_s),0);
+ sk(rt,0)
+end;
+
 
 procedure RandomArray(n:longint);
 var
@@ -118,6 +400,7 @@ var
   with z do
   begin
    u:=v mod P;
+   flag[u]:=tim;
    inc(e);
    next[e]:=head[u];
    head[u]:=e;
@@ -132,6 +415,7 @@ var
   with z do
   begin
    u:=v mod P;
+   if flag[u]<>tim then exit(false);
    i:=head[u];
    while i<>0 do
    begin
@@ -146,8 +430,9 @@ begin
  with z do
  begin
   e:=0;
+  inc(tim);
   setlength(head,P+5);
-  for i:=0 to P+4 do head[i]:=0;
+  setlength(flag,P+5);
   setlength(next,n+5);
   setlength(appr,n+5);
   for i:=1 to n do
@@ -190,6 +475,17 @@ begin
   end;
   w[i]:=ranC;
   f[ru]:=rv
+ end
+end;
+
+procedure RandomTree2(n,l,r:longint);
+var i:longint;
+begin
+ for i:=2 to n do
+ begin
+  u[i]:=rnd(1,i-1);
+  v[i]:=i;
+  w[i]:=ranC
  end
 end;
 
@@ -367,6 +663,51 @@ begin
  end
 end;
 
+function Itvl(l,r:longint):ansistring;
+var
+ x,y:longint;
+ u,v:ansistring;
+begin
+ x:=ranC;
+ y:=ranC;
+ if x>y then sw(x,y);
+ str(x,u);
+ str(y,v);
+ exit(u+' '+v)
+end;
+
+function Itvl_Lim(l,r,b:longint):ansistring;
+var
+ x,y:longint;
+ u,v:ansistring;
+begin
+ x:=ranC;
+ y:=min(x+rnd(0,b-1),r);
+ if x>y then sw(x,y);
+ str(x,u);
+ str(y,v);
+ exit(u+' '+v)
+end;
+
+function RandomString(n:longint;s:alphabet):ansistring;
+var
+ i,t:longint;
+ c:char;
+ x,y:ansistring;
+begin
+ x:='';
+ t:=0;
+ for c in s do
+ begin
+  inc(t);
+  x:=x+c
+ end;
+ y:='';
+ for i:=1 to n do
+  y:=y+x[rnd(1,t)];
+ exit(y)
+end;
+
 function SpfaGraph1(n:longint):longint;
 var
  i,EG:longint;
@@ -393,7 +734,14 @@ var
  i:longint;
 begin
  for i:=1 to n-1 do write(a[i],' ');
- write(a[n])
+ writeln(a[n])
+end;
+
+procedure writelna(n:longint);
+var
+ i:longint;
+begin
+ for i:=1 to n do writeln(a[i])
 end;
 
 procedure writeb(n:longint);
@@ -648,7 +996,7 @@ begin
   end;
   sk(Rt,0);
   f[Rt]:=0;
-  for i:=1 to n do writeln(f[i])
+  for i:=2 to n do writeln(f[i])
  end
 end;
 
@@ -736,6 +1084,8 @@ begin
  for i:=1 to n do begin write(a[i,1]);
  for j:=2 to m do write(  ' ',a[i,j]); writeln end
 end;
+
+
 
 
 begin
