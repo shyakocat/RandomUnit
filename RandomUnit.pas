@@ -62,9 +62,9 @@ function Itvl(l,r:longint):ansistring;                   //生成一个[l,r]区�
 function Itvl_Lim(l,r,b:longint):ansistring;             //生成一个[l,r]区间，满足r-l+1<=b
 function Trans(const s:ansistring):ansistring;           //转换正则表达式
                                                          //支持识别rnd(l,r) [l,r]随机数
-                                                         //       chr(l,r) [l,r]随机字符
-                                                         //       itvl(l,r) [l,r]区间
-                                                         //       pair(l,r) [l,r]的两个数
+                                                         //        chr(l,r) [l,r]随机字符
+                                                         //        itvl(l,r) [l,r]区间
+                                                         //        pair(l,r) [l,r]的两个数
 
 procedure TreeGo(rt,n:longint);                          //以rt为根遍历树，统计_d,_s,mx_d,mx_s
 
@@ -481,10 +481,10 @@ end;
 procedure RandomTree2(n,l,r:longint);
 var i:longint;
 begin
- for i:=2 to n do
+ for i:=1 to n-1 do
  begin
-  u[i]:=rnd(1,i-1);
-  v[i]:=i;
+  u[i]:=rnd(1,i);
+  v[i]:=i+1;
   w[i]:=ranC
  end
 end;
@@ -526,10 +526,10 @@ var
 begin
  RandomArray(n);
  Root:=a[1];
- for i:=2 to n do
+ for i:=1 to n-1 do
  begin
   u[i]:=Root;
-  v[i]:=a[i];
+  v[i]:=a[i+1];
   w[i]:=ranC
  end
 end;
@@ -546,9 +546,9 @@ begin
   v[i]:=a[i];
   w[i]:=ranC
  end;
- for i:=n>>1+1 to n do
+ for i:=n>>1 to n-1 do
  begin
-  u[i]:=a[i-1];
+  u[i]:=a[i+1];
   v[i]:=a[i];
   w[i]:=ranC
  end
@@ -562,18 +562,18 @@ begin
  RandomArray(n);
  Root:=a[n];
  p:=trunc(sqrt(n-1));
- for i:=1 to n div p+1 do
+ for i:=1 to (n-2)div p+1 do
  begin
   k:=(i-1)*p;
   inc(t);
   u[t]:=Root;
-  v[t]:=k+1;
+  v[t]:=a[k+1];
   w[t]:=ranC;
   for j:=k+2 to min(k+p,n-1) do
   begin
    inc(t);
-   u[t]:=j-1;
-   v[t]:=j;
+   u[t]:=a[j-1];
+   v[t]:=a[j];
    w[t]:=ranC
   end
  end
