@@ -58,6 +58,7 @@ function Rnd(l,r:longint):longint;                       //随机生成[L,R]的�
 function Sign:longint;                                   //生成1或-1，1的概率为1/2
 function Sign(x:real):longint;                           //生成1或-1，1的概率为x，x∈[0,1]
 function RandomString(n:longint;s:alphabet):ansistring;  //生成长度为n，字符集为s的随机字符串
+function Pair(l,r:longint):ansistring;                   //生成一个[l,r]内的不相等的两个数
 function Itvl(l,r:longint):ansistring;                   //生成一个[l,r]区间
 function Itvl_Lim(l,r,b:longint):ansistring;             //生成一个[l,r]区间，满足r-l+1<=b
 function Trans(const s:ansistring):ansistring;           //转换正则表达式
@@ -661,6 +662,19 @@ begin
    ad(u[i],v[i])
   end
  end
+end;
+
+function Pair(l,r:longint):ansistring;
+var
+ x,y:longint;
+ u,v:ansistring;
+begin
+ x:=ranC;
+ y:=ranC;
+ while x=y do y:=ranC;
+ str(x,u);
+ str(y,v);
+ exit(u+' '+v)
 end;
 
 function Itvl(l,r:longint):ansistring;
