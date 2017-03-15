@@ -1,4 +1,5 @@
-﻿{$M 100000000,0,100000000}         //扩大栈空间
+﻿{$MODE objfpc}
+{$M 100000000,0,100000000}         //扩大栈空间
 {$MACRO ON}                        //开启宏定义
 {$define ranC:=random(R-L+1)+L}    //生成[L,R]的随机整数
 {$define ranN:=random(N)+1}        //生成[1,N]的随机整数
@@ -21,7 +22,7 @@ type
   node:array of record u,v:longint end;       //边表中记录过的边
   appr:array of longint;                      //边表中记录过的值
  end;
- Msg=object            //消息体
+ Msg=object        //消息体
   n:longint;           //消息总数
   pr:boolean;          //输出状态
   weightsum:real;      //权重总和
@@ -41,13 +42,19 @@ var
                                                //w为边权
                                                //_d为树深
                                                //_s为子树大小
+ h,dfn:array[0..6000005]of longint;
+ st:array of array of longint;
  mx_d,mx_s:longint;                            //mx_d为最大树深
                                                //mx_s为最大子树大小
  b:array[0..3000005]of extended;               //b为随机实数数组
  s,t:ansistring;                               //s为文本字符串
                                                //t为匹配字符串
+ _pn:longint;                                  //质因子个数
+ _p,_c:array[0..1005]of longint;               //_p为质数
+                                               //_c为质数个数
 
-
+operator :=(x:longint)s:ansistring;
+operator :=(x:longint)s:string;
 
 procedure Fopen(const s:ansistring);                     //打开输出文件
 procedure Fclose;                                        //关闭输出文件
@@ -55,6 +62,7 @@ procedure Pai(ran,A,B,Ao,Bo:ansistring);                 //生成对拍的bat，
 procedure Pai(x:ansistring);                             //生成对拍的bat，对应Pai(xran.exe,xa.exe,x.exe,xa.out,x.out)
 
 function Rnd(l,r:longint):longint;                       //随机生成[L,R]的数
+function antiRnd(l,r:longint;const a:array of const):longint; //随机生成[L,R]的数，但不能是给定的数
 function Sign:longint;                                   //生成1或-1，1的概率为1/2
 function Sign(x:real):longint;                           //生成1或-1，1的概率为x，x∈[0,1]
 function RandomString(n:longint;s:alphabet):ansistring;  //生成长度为n，字符集为s的随机字符串
@@ -68,6 +76,14 @@ function Trans(const s:ansistring):ansistring;           //转换正则表达式
                                                          //        pair(l,r) [l,r]的两个数
 
 procedure TreeGo(rt,n:longint);                          //以rt为根遍历树，统计_d,_s,mx_d,mx_s
+function lca(u,v:longint):longint;
+
+procedure FactorGo(x:longint);                           //分解质因数
+function isPrime(x:longint):boolean;                     //判断质数
+function PrimeRoot(x:longint):longint;                   //求原根
+function Inv(a,b:longint):longint;                       //求逆元
+function Phi(x:longint):longint;                         //求欧拉函数
+function Miu(x:longint):longint;                         //求莫比乌斯函数
 
 procedure RandomArray(n:longint);                        //生成一个N的排列
 procedure RandomArray(n,l,r:longint);                    //生成长度为N，范围于[L,R]的数组
@@ -102,8 +118,8 @@ function SpfaGraph1(n:longint):longint;                  //构造wiki中的卡SP
 
 implementation
 
-operator :=(x:longint)s:ansistring;
-begin str(x,s) end;
+operator :=(x:longint)s:ansistring;begin str(x,s) end;
+operator :=(x:longint)s:string;begin str(x,s) end;
 
   function sread_int(const s:ansistring;var i,x:longint):boolean;
   var sgn:longint;
@@ -306,6 +322,18 @@ end;
 function Rnd(l,r:longint):longint;
 begin exit(RanC) end;
 
+function antiRnd(l,r:longint;const a:array of const):longint;
+var x,i:longint; b:boolean;
+begin
+ repeat
+  x:=ranC;
+  b:=true;
+  for i:=0 to high(a) do
+  if a[i].vinteger=x then begin b:=false; break end
+ until b;
+ exit(x)
+end;
+
 function Sign:longint;
 begin if random(2)=0 then exit(1); exit(-1) end;
 
@@ -315,11 +343,13 @@ begin if random(oo)<oo*x then exit(1); exit(-1) end;
 procedure sw(var a,b:longint);
 var c:longint; begin c:=a; a:=b; b:=c end;
 
+function lw(u,v:longint):longint;
+begin if _d[u]<_d[v] then exit(u); exit(v) end;
 
 procedure TreeGo(rt,n:longint);
 var
  z:Chart;
- i:longint;
+ i,j,w,t:longint;
 
  procedure ad(u,v:longint);
  begin
@@ -336,6 +366,9 @@ var
  var i,v:longint;
  begin
   _s[u]:=1;
+  inc(t);
+  dfn[u]:=t;
+  st[0,t]:=u;
   i:=z.head[u];
   while i<>0 do
   begin
@@ -344,7 +377,9 @@ var
    begin
     _d[v]:=_d[u]+1;
     sk(v,u);
-    inc(_s[u],_s[v])
+    inc(_s[u],_s[v]);
+    inc(t);
+    st[0,t]:=u
    end;
    i:=z.next[i]
   end;
@@ -370,9 +405,99 @@ begin
  mx_s:=0;
  fillchar(_d,sizeof(_d),0);
  fillchar(_s,sizeof(_s),0);
- sk(rt,0)
+ t:=0;
+ w:=trunc(ln(n)/ln(2)+1e-6);
+ setlength(st,w+1,n+5);
+ sk(rt,0);
+ for i:=2 to t do h[i]:=h[i>>1]+1;
+ for j:=1 to w do
+ for i:=1 to t-1<<j+1 do st[j,i]:=lw(st[j-1,i],st[j-1,i+1<<(j-1)])
 end;
 
+function lca(u,v:longint):longint;
+var w:longint;
+begin
+ u:=dfn[u]; v:=dfn[v]; if u>v then sw(u,v); w:=h[v-u+1];
+ exit(lw(st[w,u],st[w,v-1<<w+1]))
+end;
+
+procedure FactorGo(x:longint);
+var i:longint;
+begin
+ _pn:=0;
+ i:=2;
+ while x>=i*i do
+ begin
+  if x mod i=0 then
+  begin
+   inc(_pn);
+   _p[_pn]:=i;
+   _c[_pn]:=0;
+   repeat x:=x div i; inc(_c[_pn]) until x mod i<>0
+  end;
+  inc(i)
+ end;
+ if x>1 then begin inc(_pn); _p[_pn]:=x; _c[_pn]:=1 end
+end;
+
+function isPrime(x:longint):boolean;
+var i:longint;
+begin
+ for i:=2 to trunc(sqrt(x)) do
+ if x mod i=0 then exit(false);
+ exit(true)
+end;
+
+function pw(const x,y,z:int64):int64;
+begin
+ if y=0 then exit(1);
+ if y=1 then exit(x);
+ exit(sqr(pw(x,y>>1,z))mod z*pw(x,y and 1,z)mod z)
+end;
+
+function PrimeRoot(x:longint):longint;
+var g,i:longint; j:boolean;
+begin
+ FactorGo(x-1);
+ for g:=2 to x-1 do
+ begin
+  j:=true;
+  for i:=1 to _pn do
+  if pw(g,(x-1)div _p[i],x)=1 then
+  begin j:=false; break end;
+  if j then exit(g)
+ end
+end;
+
+procedure exgcd(a,b:longint;var x,y:longint);
+var t:longint;
+begin
+ if b=0 then begin x:=1; y:=0; exit end;
+ exgcd(b,a mod b,x,y);
+ t:=x; x:=y; y:=t-a div b*y
+end;
+
+function Inv(a,b:longint):longint;
+var y:longint; begin exgcd(a,b,Inv,y) end;
+
+function Phi(x:longint):longint;
+var i:longint;
+begin
+ if x=1 then exit(1);
+ FactorGo(x);
+ Phi:=x;
+ for i:=1 to _pn do Phi:=Phi div _p[i]*(_p[i]-1)
+end;
+
+function Miu(x:longint):longint;
+var i:longint;
+begin
+ if x=1 then exit(1);
+ FactorGo(x);
+ for i:=1 to _pn do
+ if _c[i]>1 then exit(0);
+ exit(1-(_pn and 1)*2)
+end;
 
 procedure RandomArray(n:longint);
 var
