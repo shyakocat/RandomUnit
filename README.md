@@ -53,7 +53,8 @@ end.
 ```
 
 
-bzoj 4765的随机数据生成器（Tips:随机库只有处理longint范围，记得改了数据范围n时要把正则表达式内的数据范围也适当调整）
+bzoj 4765的随机数据生成器（Tips:随机库只有处理longint范围，记得改了数据范围n时要把正则表达式内的数据范围也适当调整）   
+/// 2017/03/17附：可以x.def('N',100000)后将语句中N替换成100000（def(ansistring,ansistring)，可以直接写longint因为本库支持隐式转换）。注意写的是大写N不然例如rnd中的小写n会被替换掉。
 ```
 uses RandomUnit;
 const
