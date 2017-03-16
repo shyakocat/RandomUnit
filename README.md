@@ -46,7 +46,7 @@ begin
  for i:=1 to m do
  begin
   x:=rnd(1,n);
-  writeln(x,' ',rnd(0,mx_d-_d[x]))      //输出点x、向下深度，mx_d表示最大深度，_d[x]表示点x的深度，这样就不会超限了
+  writeln(x,' ',rnd(0,mx_d-_d[x]))      //mx_d表示最大深度，_d[x]表示点x的深度，这样深度就不会超限了
  end;
  Fclose
 end.
@@ -60,15 +60,15 @@ const
  n=100000;
  m=100000;
 var
- x:Msg;
+ x:Msg;                                               //向消息体中添加正则表达式吧
 begin
  Fopen('4765.in');
  writeln(n,' ',m);
- RandomArray(n,0,maxlongint-1);                       //不要用maxlongint，因为[0,maxlongint]区间长度会爆longint
+ RandomArray(n,0,maxlongint-1);                       //慎用maxlongint，因为[0,maxlongint]区间长度会爆
  writea(n);
  RandomTree(n,1,1);
  writeuv(n-1);
- x.add(1,'1 &rnd(1,100000) &rnd(0,2100000000)');      //正则表达式（虽然没什么大用）：匹配——&rnd(l,r)转换成一个[l,r]随机数
+ x.add(1,'1 &rnd(1,100000) &rnd(0,2100000000)');      //匹配——&rnd(l,r)转换成一个[l,r]随机数
  x.add(1,'2 &itvl(1,100000)');                        //匹配——&itvl(l,r)转换成一个[l,r]区间
  x.println(m);                                        //输出m句消息，上面添加的消息权重都是1，所以输出概率各50%
  Fclose
@@ -90,12 +90,14 @@ var
  n,q,p,i,x,y:longint;
  f:array[1..30000]of longint;
 begin
- Option([@n,@q,@p]);                             //通过外部的opt.txt中获取n,q,p的值，这样免得每次编译了，即Option('opt.txt',[...]);
+ Option([@n,@q,@p]);                             //通过外部的opt.txt中获取n,q,p的值，这样免得每次编译了
+                                                 //还可以写成Option('opt.txt',[...]);
  Fopen('2759.in');
  writeln(n);
  for i:=1 to n do
  begin
-  f[i]:=antiRnd(1,n,[i]);                        //antiRnd(l,r,[...])作用是生成[l,r]区间的随机数，但不等于后面动态数组里的数
+  f[i]:=antiRnd(1,n,[i]);                        //antiRnd(l,r,[...])生成[l,r]间的随机数
+                                                 //但不等于后面动态数组里的数
   writeln(rnd(0,p-1),' ',f[i],' ',rnd(0,p-1))
  end;
  writeln(q);
