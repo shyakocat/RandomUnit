@@ -26,6 +26,9 @@ type
   pr:boolean;          //输出状态
   weightsum:real;      //权重总和
   a:array of record weight:real; code:ansistring; timelim,time:longint end; //weight语句权重，code正则表达式（由Trans识别），timelim语句限制个数
+  b:array of record u,v:ansistring end;
+  function replace(const s:ansistring):ansistring;                          //语句翻译前字符串按序单次替换
+  procedure def(const u,v:ansistring);                                      //添加字符串替换
   procedure add(const p:real;const s:ansistring);                           //添加语句：权重，正则表达式
   procedure add(const p:real;const s:ansistring;t:longint);                 //添加语句：权重，正则表达式，语句限制个数
   procedure print;                                                          //输出单行（不换行）
@@ -77,15 +80,17 @@ function Itvl(l,r:longint):ansistring;                   //生成一个[l,r]区�
 function Itvl_Lim(l,r,b:longint):ansistring;             //生成一个[l,r]区间，满足r-l+1<=b
 function Trans(const s:ansistring):ansistring;           //转换正则表达式
                                                          //支持识别rnd(l,r) [l,r]随机数
-                                                         //        chr(l,r) [l,r]随机字符
-                                                         //        itvl(l,r) [l,r]区间
-                                                         //        pair(l,r) [l,r]的两个数
+                                                         //　　　　chr(l,r) [l,r]随机字符
+                                                         //　　　　itvl(l,r) [l,r]区间
+                                                         //　　　　pair(l,r) [l,r]的两个数
 
 procedure TreeGo(rt,n:longint);                          //以rt为根遍历树，统计_d,_s,mx_d,mx_s
 function lca(u,v:longint):longint;                       //TreeGo后，求u，v的最近公共祖先
 
 procedure FactorGo(x:longint);                           //分解质因数
 function isPrime(x:longint):boolean;                     //判断质数
+function Gcd(a,b:longint):longint;                       //最大公约数
+function Lcm(a,b:longint):longint;                       //最小公倍数
 function PrimeRoot(x:longint):longint;                   //求原根
 function Inv(a,b:longint):longint;                       //求逆元
 function Phi(x:longint):longint;                         //求欧拉函数
@@ -135,7 +140,7 @@ operator :=(x:longint)s:string;begin str(x,s) end;
    begin sgn:=-1; inc(i) end else sgn:=1;
    if not((i<=length(s))and('0'<=s[i])and(s[i]<='9')) then exit(false);
    while (i<=length(s))and('0'<=s[i])and(s[i]<='9') do
-   begin x:=x*10+ord(s[i])-48; inc(i) end;
+   begin x:=x*10-48+ord(s[i]); inc(i) end;
    x:=x*sgn;
    exit(true)
   end;
@@ -228,6 +233,32 @@ begin
  exit(t)
 end;
 
+ function Msg.replace(const s:ansistring):ansistring;
+ var t,r:ansistring; j,i,lu:longint;
+ begin
+  t:=s;
+  for j:=0 to high(b) do
+  with b[j] do
+  begin
+   lu:=length(u);
+   r:='';
+   for i:=1 to length(t) do
+   begin
+    r:=r+t[i];
+    if (length(r)>=lu)and(copy(r,length(r)-lu+1,lu)=u) then
+     r:=copy(r,1,length(r)-lu)+v
+   end;
+   t:=r
+  end;
+  exit(t)
+ end;
+
+ procedure Msg.def(const u,v:ansistring);
+ begin
+  setlength(b,high(b)+2);
+  b[high(b)].u:=u;
+  b[high(b)].v:=v
+ end;
 
  procedure Msg.add(const p:real;const s:ansistring);
  begin
@@ -265,7 +296,7 @@ end;
       if timelim=time then break;
       inc(time)
      end;
-     write(trans(code));
+     write(trans(replace(code)));
      exit
     end
    end
@@ -326,11 +357,11 @@ begin
 end;
 
 procedure Option(const f:ansistring;const a:array of pint);
-var i:longint;
+var i:longint; tmpFile:text;
 begin
- assign(input,f); reset(input);
- for i:=0 to high(a) do read(a[i]^);
- close(input)
+ assign(tmpFile,f); reset(tmpFile);
+ for i:=0 to high(a) do read(tmpFile,a[i]^);
+ close(tmpFile)
 end;
 
 procedure Option(const a:array of pint);
@@ -472,18 +503,26 @@ begin
  exit(sqr(pw(x,y>>1,z))mod z*pw(x,y and 1,z)mod z)
 end;
 
+function Gcd(a,b:longint):longint;
+begin if b=0 then exit(a); exit(gcd(b,a mod b)) end;
+
+function Lcm(a,b:longint):longint;
+begin exit(a div Gcd(a,b)*b) end;
+
 function PrimeRoot(x:longint):longint;
-var g,i:longint; j:boolean;
+var g,i,y:longint; j:boolean;
 begin
- FactorGo(x-1);
+ y:=Phi(x);
+ FactorGo(y);
  for g:=2 to x-1 do
  begin
   j:=true;
   for i:=1 to _pn do
-  if pw(g,(x-1)div _p[i],x)=1 then
+  if pw(g,y div _p[i],x)=1 then
   begin j:=false; break end;
   if j then exit(g)
- end
+ end;
+ exit(-1)
 end;
 
 procedure exgcd(a,b:longint;var x,y:longint);
