@@ -1,5 +1,4 @@
-﻿{$MODE objfpc}
-{$M 100000000,0,100000000}         //扩大栈空间
+﻿{$M 100000000,0,100000000}         //扩大栈空间
 {$MACRO ON}                        //开启宏定义
 {$define ranC:=random(R-L+1)+L}    //生成[L,R]的随机整数
 {$define ranN:=random(N)+1}        //生成[1,N]的随机整数
@@ -34,6 +33,7 @@ type
   procedure println(k:longint);                                             //输出连续K句消息，语句限制个数起作用
  end;
  alphabet=set of char;
+ pint=^longint;
 var
  a,f,u,v,w,_d,_s:array[0..3000005]of longint;  //a为随机数组
                                                //f为并查集
@@ -42,13 +42,17 @@ var
                                                //w为边权
                                                //_d为树深
                                                //_s为子树大小
- h,dfn:array[0..6000005]of longint;
- st:array of array of longint;
+
+ h,dfn:array[0..6000005]of longint;            //h为二次幂
+                                               //dfn为欧拉序
+ st:array of array of longint;                 //st为ST表
+
  mx_d,mx_s:longint;                            //mx_d为最大树深
                                                //mx_s为最大子树大小
  b:array[0..3000005]of extended;               //b为随机实数数组
  s,t:ansistring;                               //s为文本字符串
                                                //t为匹配字符串
+
  _pn:longint;                                  //质因子个数
  _p,_c:array[0..1005]of longint;               //_p为质数
                                                //_c为质数个数
@@ -60,9 +64,11 @@ procedure Fopen(const s:ansistring);                     //打开输出文件
 procedure Fclose;                                        //关闭输出文件
 procedure Pai(ran,A,B,Ao,Bo:ansistring);                 //生成对拍的bat，ran为随机程序名，A为标程名，B为待测程序名，Ao为标程输出文件名，Bo为待测程序输出文件名
 procedure Pai(x:ansistring);                             //生成对拍的bat，对应Pai(xran.exe,xa.exe,x.exe,xa.out,x.out)
+procedure Option(const f:ansistring;const a:array of pint);  //从f文件读取配置的数据范围
+procedure Option(const a:array of pint);                     //从opt.txt文件读取配置的数据范围
 
 function Rnd(l,r:longint):longint;                       //随机生成[L,R]的数
-function antiRnd(l,r:longint;const a:array of const):longint; //随机生成[L,R]的数，但不能是给定的数
+function antiRnd(l,r:longint;const a:array of longint):longint; //随机生成[L,R]的数，但不能是给定的数
 function Sign:longint;                                   //生成1或-1，1的概率为1/2
 function Sign(x:real):longint;                           //生成1或-1，1的概率为x，x∈[0,1]
 function RandomString(n:longint;s:alphabet):ansistring;  //生成长度为n，字符集为s的随机字符串
@@ -76,7 +82,7 @@ function Trans(const s:ansistring):ansistring;           //转换正则表达式
                                                          //        pair(l,r) [l,r]的两个数
 
 procedure TreeGo(rt,n:longint);                          //以rt为根遍历树，统计_d,_s,mx_d,mx_s
-function lca(u,v:longint):longint;
+function lca(u,v:longint):longint;                       //TreeGo后，求u，v的最近公共祖先
 
 procedure FactorGo(x:longint);                           //分解质因数
 function isPrime(x:longint):boolean;                     //判断质数
@@ -319,17 +325,28 @@ begin
  Pai(x+'ran.exe',x+'.exe',x+'a.exe',x+'.out',x+'a.out')
 end;
 
+procedure Option(const f:ansistring;const a:array of pint);
+var i:longint;
+begin
+ assign(input,f); reset(input);
+ for i:=0 to high(a) do read(a[i]^);
+ close(input)
+end;
+
+procedure Option(const a:array of pint);
+begin Option('opt.txt',a) end;
+
 function Rnd(l,r:longint):longint;
 begin exit(RanC) end;
 
-function antiRnd(l,r:longint;const a:array of const):longint;
+function antiRnd(l,r:longint;const a:array of longint):longint;
 var x,i:longint; b:boolean;
 begin
  repeat
   x:=ranC;
   b:=true;
   for i:=0 to high(a) do
-  if a[i].vinteger=x then begin b:=false; break end
+  if a[i]=x then begin b:=false; break end
  until b;
  exit(x)
 end;
