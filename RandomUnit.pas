@@ -72,6 +72,7 @@ procedure Option(const a:array of pint);                     //从opt.txt文件�
 
 function Rnd(l,r:longint):longint;                       //随机生成[L,R]的数
 function antiRnd(l,r:longint;const a:array of longint):longint; //随机生成[L,R]的数，但不能是给定的数
+function RndPri(l,r:longint):longint;                    //随机生成[L,R]的质数
 function Sign:longint;                                   //生成1或-1，1的概率为1/2
 function Sign(x:real):longint;                           //生成1或-1，1的概率为x，x∈[0,1]
 function RandomString(n:longint;s:alphabet):ansistring;  //生成长度为n，字符集为s的随机字符串
@@ -88,6 +89,8 @@ procedure TreeGo(rt,n:longint);                          //以rt为根遍历树�
 function lca(u,v:longint):longint;                       //TreeGo后，求u，v的最近公共祖先
 
 procedure FactorGo(x:longint);                           //分解质因数
+function Max(a,b:longint):longint;                       //较大值
+function Min(a,b:longint):longint;                       //较小值
 function isPrime(x:longint):boolean;                     //判断质数
 function Gcd(a,b:longint):longint;                       //最大公约数
 function Lcm(a,b:longint):longint;                       //最小公倍数
@@ -382,6 +385,13 @@ begin
  exit(x)
 end;
 
+function RndPri(l,r:longint):longint;
+var x:longint;
+begin
+ repeat x:=ranC until isPrime(x);
+ exit(x)
+end;
+
 function Sign:longint;
 begin if random(2)=0 then exit(1); exit(-1) end;
 
@@ -487,6 +497,12 @@ begin
  end;
  if x>1 then begin inc(_pn); _p[_pn]:=x; _c[_pn]:=1 end
 end;
+
+function Max(a,b:longint):longint;
+begin if a>b then exit(a); exit(b) end;
+
+function Min(a,b:longint):longint;
+begin if a>b then exit(b); exit(a) end;
 
 function isPrime(x:longint):boolean;
 var i:longint;
