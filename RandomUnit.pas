@@ -71,6 +71,8 @@ procedure Option(const f:ansistring;const a:array of pint);  //从f文件读取�
 procedure Option(const a:array of pint);                     //从opt.txt文件读取配置的数据范围
 
 function Rnd(l,r:longint):longint;                       //随机生成[L,R]的数
+function Rnd(l,r:int64):int64;
+function Rnd(l,r:char):char;
 function antiRnd(l,r:longint;const a:array of longint):longint; //随机生成[L,R]的数，但不能是给定的数
 function RndPri(l,r:longint):longint;                    //随机生成[L,R]的质数
 function Sign:longint;                                   //生成1或-1，1的概率为1/2
@@ -189,7 +191,7 @@ operator :=(x:longint)s:string;begin str(x,s) end;
     if sread_int(s,j,R) then
     if (j<=length(s))and(s[j]=')') then begin i:=j+1;
     x:=ranC; y:=ranC; if x>y then begin j:=x; x:=y; y:=j end;
-    exit(ansistring(x)+' '+y) end
+    exit(ansistring(x)+' '+ansistring(y)) end
     end
    end;
    exit('')
@@ -206,7 +208,7 @@ operator :=(x:longint)s:string;begin str(x,s) end;
     if sread_int(s,j,R) then
     if (j<=length(s))and(s[j]=')') then begin i:=j+1;
     x:=ranC; repeat y:=ranC until y<>x;
-    exit(ansistring(x)+' '+y) end
+    exit(ansistring(x)+' '+ansistring(y)) end
     end
    end;
    exit('')
@@ -372,6 +374,12 @@ begin Option('opt.txt',a) end;
 
 function Rnd(l,r:longint):longint;
 begin exit(RanC) end;
+
+function Rnd(l,r:int64):int64;
+begin exit(RanC) end;
+
+function Rnd(l,r:char):char;
+begin exit(char(ord(l)+random(ord(r)-ord(l)+1))) end;
 
 function antiRnd(l,r:longint;const a:array of longint):longint;
 var x,i:longint; b:boolean;
@@ -1084,7 +1092,6 @@ begin
   t:=random(n-2*m+1)+m;
   s:=n-t;
   RandomTree(s,l,r);
-  writeuv(s-1); writeln('The Tree');
   EG:=0;
   for i:=1 to s-1 do
   begin
