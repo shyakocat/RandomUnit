@@ -931,6 +931,7 @@ function SpfaGraph1(n:longint):longint;
 var
  i,EG:longint;
 begin
+ EG:=0;
  for i:=1 to n-1 do
  begin
   inc(EG);
