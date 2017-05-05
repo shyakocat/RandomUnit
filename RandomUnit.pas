@@ -913,6 +913,7 @@ var
  i,t:longint;
  c:char;
  x,y:ansistring;
+ p:pchar=nil;
 begin
  x:='';
  t:=0;
@@ -922,8 +923,10 @@ begin
   x:=x+c
  end;
  y:='';
- for i:=1 to n do
-  y:=y+x[rnd(1,t)];
+ p:=getMem(n);
+ for i:=0 to n-1 do
+  p[i]:=x[rnd(1,t)];
+ y:=ansistring(p);
  exit(y)
 end;
 
