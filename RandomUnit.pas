@@ -923,10 +923,10 @@ begin
   x:=x+c
  end;
  y:='';
- p:=GetMem(n);
+ p:=getMem(n);
  for i:=0 to n-1 do
   p[i]:=x[rnd(1,t)];
- y:=ansistring(p);
+ y:=copy(ansistring(p),1,n);
  FreeMem(p);
  exit(y)
 end;
