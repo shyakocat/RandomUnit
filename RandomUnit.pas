@@ -605,7 +605,7 @@ var
  begin
   with z do
   begin
-   u:=v mod P;
+   u:=((v mod P)+P)mod P;
    flag[u]:=tim;
    inc(e);
    next[e]:=head[u];
@@ -620,7 +620,7 @@ var
  begin
   with z do
   begin
-   u:=v mod P;
+   u:=((v mod P)+P)mod P;
    if flag[u]<>tim then exit(false);
    i:=head[u];
    while i<>0 do
