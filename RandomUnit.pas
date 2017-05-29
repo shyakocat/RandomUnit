@@ -330,7 +330,8 @@ end;
 
 procedure Fclose;
 begin
- close(output)
+ close(output);
+ assign(output,''); rewrite(output)
 end;
 
 procedure Pai(ran,A,B,Ao,Bo:ansistring);
